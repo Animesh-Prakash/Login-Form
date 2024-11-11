@@ -11,7 +11,7 @@ const client = new MongoClient(url);
 const dbName= 'SignUp'
 const app = express()
 
-const port = process.env.PORT || 3000;
+const port = 3000
 app.use(bodyparser.json())
 app.use(cors())
 client.connect();
@@ -32,6 +32,5 @@ app.post('/',async(req,res)=>{
   res.send({success:true, result:findResult})  
 })
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server is running on port ${port}`);
-});
+app.listen(port, () => {
+  console.log(`Example app listening on http://localhost:${port}`)})
