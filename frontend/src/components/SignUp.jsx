@@ -30,7 +30,7 @@ const SignUp = ({ passwordArray, setPasswordArray }) => {
 
     try {
       const { status, data } = await axios.post(
-        'http://localhost:5000/api/auth/signup',
+        'https://login-form-9ayh.onrender.com/api/auth/signup',
         form,
         { headers: { 'Content-Type': 'application/json' } }
       );
