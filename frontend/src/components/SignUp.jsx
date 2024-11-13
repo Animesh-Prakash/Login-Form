@@ -1,106 +1,88 @@
 import React, { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const SignUp = ({ passwordArray, setPasswordArray }) => {
   const [form, setForm] = useState({ username: '', password: '' });
-  const navigate = useNavigate(); // Initialize navigate for redirection
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const showpassword = async () => {
-    let req = await fetch('http://localhost:3000/');
-    let passwords = await req.json();
-    setPasswordArray(passwords);
-    console.log(passwords);
-  };
-
   const signup = async () => {
-    if (form.password.length > 8) {
-      console.log(form);
-      await showpassword();
-      const user = passwordArray.find(
-        user => user.username === form.username && user.password === form.password
+    if (form.password.length <= 8) {
+      toast.error("Password must be more than 8 characters");
+      return;
+    }
+
+    const userExists = passwordArray.some(
+      user => user.username === form.username && user.password === form.password
+    );
+
+    if (userExists) {
+      toast.error("This account already exists");
+      setForm({ username: '', password: '' });
+      return;
+    }
+
+    try {
+      const { status, data } = await axios.post(
+        'http://localhost:5000/api/auth/signup',
+        form,
+        { headers: { 'Content-Type': 'application/json' } }
       );
-      if (user) {
-        toast.error("This account already exists");
+
+      if (status === 201) {
+        setPasswordArray([...passwordArray, { ...form }]);
+        toast.success("Account created successfully!");
         setForm({ username: '', password: '' });
-        return;
-      }
-      const newUser = { ...form, id: uuidv4() };
-      setPasswordArray([...passwordArray, newUser]);
-
-      await fetch('http://localhost:3000/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser)
-      });
-
-       setForm({ username: '', password: '' });
-       toast('Your Account is Created!', {
-         position: 'top-right',
-         autoClose: 3000,
-         hideProgressBar: false,
-         closeOnClick: true,
-       pauseOnHover: true,
-         draggable: true,
-         progress: undefined,
-         theme: 'dark'
-       });
-
-       setTimeout(() => {
         navigate('/login');
-      }, 3000);
-    } else {
-      toast('Password size must be more than 8');
+      } else {
+        toast.error(data.message || "Failed to create account");
+      }
+    } catch (error) {
+      toast.error("Error signing up: " + error.message);
     }
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 h-[100vh] w-[100%] flex justify-center items-center">
-      <ToastContainer/>
-      <div className="w-[370px] h-[90vh] bg-white py-8 px-3 flex flex-col items-center below-500:h-[80vh] below-500:w-[340px] ">
-        <h1 className="text-3xl font-bold mb-4">Sign Up</h1>
-        <div className="my-3 w-[85%] mx-5 flex flex-col items-start justify-start p-3 below-500:p-[0.20rem] below-500:mt-[5vh]">
-          <div className="w-full mb-3">
-            <div className="text-sm font-medium">Username</div>
+    <div className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 h-screen flex justify-center items-center">
+      <ToastContainer />
+      <div className="w-96 bg-white p-8 flex flex-col items-center rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
+        <div className="w-full space-y-4">
+          <div>
+            <label className="text-sm font-medium">Username</label>
             <input
               type="text"
-              className="border-2 w-full my-2 h-10 rounded-[10px] px-2"
               name="username"
               value={form.username}
               onChange={handleChange}
+              className="border w-full mt-1 p-2 rounded-lg"
             />
           </div>
-          <div className="w-full mb-3">
-            <div className="text-sm font-medium">Password</div>
-            <div className="flex relative">
-              <input
-                type="password"
-                className="border-2 w-full my-2 h-10 rounded-[10px] px-2"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-              />
-              <span className="absolute right-3 top-3 cursor-pointer">
-                <img src="" alt="" width="30px" />
-              </span>
-            </div>
+          <div>
+            <label className="text-sm font-medium">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              className="border w-full mt-1 p-2 rounded-lg"
+            />
           </div>
-          <div
-            className="w-full my-8 py-2 text-center bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-[25px] cursor-pointer"
+          <button
+            className="w-full py-2 mt-6 bg-gradient-to-r from-blue-400 to-pink-500 rounded-full text-white"
             onClick={signup}
           >
             Sign Up
-          </div>
-          <div className="text-center">
-            <Link to="/login">Login?</Link>
-          </div>
+          </button>
+          <p className="text-center mt-4">
+            Already have an account? <Link to="/login" className="text-blue-500">Login</Link>
+          </p>
         </div>
       </div>
     </div>

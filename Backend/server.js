@@ -1,36 +1,37 @@
-const express = require('express')
-const { MongoClient } = require('mongodb');
-const dotenv=require('dotenv')
-const bodyparser= require('body-parser')
-const cors= require('cors')
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+require("dotenv").config();
 
-dotenv.config();
-const url = 'mongodb://localhost:27017';
-const client = new MongoClient(url);
+const app = express();
 
-const dbName= 'SignUp'
-const app = express()
+app.use(cors());
+app.use(bodyParser.json());
 
-const port = 3000
-app.use(bodyparser.json())
-app.use(cors())
-client.connect();
+console.log("Environment variables:", process.env.MONGODB_URI);
 
-app.get('/',async(req,res)=>{
-  const db = client.db(dbName);
-    const collection = db.collection('Members');
-    const findResult = await collection.find({}).toArray();
-  res.json(findResult)
+if (!process.env.MONGODB_URI) {
+  console.error("MongoDB URI is undefined. Check your .env file.");
+  process.exit(1);
+}
+
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+  })
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
+
+app.use("/api/auth", require("./routes/auth"));
+
+const PORT = process.env.PORT || 5000;
+
+app.get('/', (req, res) => {
+  res.send("Hello World");
 })
 
-app.post('/',async(req,res)=>{
- 
-  const {username,password}=req.body;
-  const db = client.db(dbName);
-  const collection = db.collection('Members');
-  const findResult = await collection.insertOne({username,password});
-  res.send({success:true, result:findResult})  
-})
-
-app.listen(port, () => {
-  console.log(`Example app listening on http://localhost:${port}`)})
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
